@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
+import Header from '@/components/ui/header'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -27,10 +28,19 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen flex flex-col`}
       >
-        <div className="flex flex-col h-full gap-2 ">
-          <div className="w-full h-[5%] bg-red-500">Header</div>
-          <div className="flex flex-grow">{children}</div>
-          <div className="w-full h-[5%] bg-pink-500">Footer</div>
+        <div className="flex flex-col h-full gap-2 p-2">
+          <div className="w-full border-b-2 ">
+            <Header />
+          </div>
+          <div className="flex flex-grow gap-2 mx-2 p-3 ">
+            <div className="grow  p-4">{children}</div>
+          </div>
+
+          <div className="w-full h-[5%] bg-muted py-4 text-center">
+            <p className="text-sm text-muted-foreground">
+              © 2024 GOCART Admin Board. All rights reserved.
+            </p>
+          </div>
         </div>
       </body>
     </html>
