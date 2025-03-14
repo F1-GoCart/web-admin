@@ -19,7 +19,19 @@ type Product = Database["public"]["Tables"]["product_details"]["Row"];
 export default function Page() {
   const [products, setProducts] = useState<Product[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editModal, setIsEditModal] = useState(false);
+  const [addModal, setIsAddModal] = useState(false);
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    price: 0,
+    stock: 0,
+    category: "",
+    aisle: "",
+    image: "",
+    is_sale: false,
+    size: "",
+    promo_price: 0,
+  });
 
   const fetchProducts = async () => {
     const { data, error } = await supabase
@@ -74,14 +86,49 @@ export default function Page() {
     }
   };
 
-  const openEditModal = (product: Product) => {
-    setEditingProduct(product);
-    setIsModalOpen(true);
+  const saveProduct = async () => {
+    if (!newProduct.name.trim()) {
+      console.error("Product name is required.");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("product_details")
+      .insert([newProduct])
+      .select();
+
+    if (error) {
+      console.error("Error adding product:", error.message);
+    } else {
+      setProducts((prev) => [...prev, ...data]);
+      closeModals();
+      setNewProduct({
+        name: "",
+        price: 0,
+        stock: 0,
+        category: "",
+        aisle: "",
+        image: "",
+        is_sale: false,
+        size: "",
+        promo_price: 0,
+      });
+    }
   };
 
-  const closeModal = () => {
+  const openAddProductModal = () => {
+    setIsAddModal(true);
+  };
+
+  const openEditModal = (product: Product) => {
+    setEditingProduct(product);
+    setIsEditModal(true);
+  };
+
+  const closeModals = () => {
     setEditingProduct(null);
-    setIsModalOpen(false);
+    setIsEditModal(false);
+    setIsAddModal(false);
   };
 
   const updateProduct = async () => {
@@ -94,16 +141,55 @@ export default function Page() {
     if (error) {
       console.error("Error updating product:", error);
     } else {
-      closeModal();
+      closeModals();
     }
   };
+
+  useEffect(() => {
+    fetchProducts();
+
+    const channel = supabase
+      .channel("product_details")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "product_details" },
+        (payload) => {
+          setProducts((prev) => [...prev, payload.new as Product]);
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "product_details" },
+        (payload) => {
+          setProducts((prev) =>
+            prev.map((p) =>
+              p.id === payload.new.id ? (payload.new as Product) : p
+            )
+          );
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "product_details" },
+        (payload) => {
+          setProducts((prev) => prev.filter((p) => p.id !== payload.old.id));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   return (
     <div>
       <h1 className="text-xl font-bold mb-4">
         <div className="flex justify-between items-center gap-2">
           <span>Products</span>
-          <Button className="text-sm">Add Inventory</Button>
+          <Button className="text-sm" onClick={openAddProductModal}>
+            Add Inventory
+          </Button>
         </div>
       </h1>
       <Table>
@@ -163,7 +249,7 @@ export default function Page() {
         </TableBody>
       </Table>
 
-      {isModalOpen && editingProduct && (
+      {editModal && editingProduct && (
         <div className="fixed inset-0 flex items-center justify-center backdrop-blur-md bg-black/10 z-50">
           <div className="bg-white p-6 rounded-lg w-96 shadow-lg">
             <h2 className="text-lg font-semibold mb-4">Edit Product</h2>
@@ -211,10 +297,115 @@ export default function Page() {
             </label>
 
             <div className="flex justify-end gap-2 mt-4">
-              <Button className="bg-gray-400" onClick={closeModal}>
+              <Button className="bg-gray-400" onClick={closeModals}>
                 Cancel
               </Button>
               <Button className="bg-blue-500" onClick={updateProduct}>
+                Save
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {addModal && (
+        <div className="fixed inset-0 flex items-center justify-center backdrop-blur-md bg-black/10 z-50">
+          <div className="bg-white p-6 rounded-lg w-96 shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">Add Product</h2>
+
+            <div className="flex justify-end gap-2 mt-4">
+              <Button className="bg-gray-400" onClick={closeModals}>
+                Cancel
+              </Button>
+              <Button
+                className="bg-blue-500"
+                onClick={() => {
+                  console.log("...");
+                }}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {addModal && (
+        <div className="fixed inset-0 flex items-center justify-center backdrop-blur-md bg-black/30 z-50">
+          <div className="bg-white p-6 rounded-lg w-96 shadow-lg gap-y-1">
+            <h2 className="text-lg font-semibold mb-4">Add Product</h2>
+            <input
+              type="text"
+              className="border p-2 rounded w-full"
+              placeholder="Product Name"
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, name: e.target.value })
+              }
+            />
+            <input
+              type="text"
+              className="border p-2 mt-3 rounded w-full"
+              placeholder="Size"
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, size: e.target.value })
+              }
+            />
+            <input
+              type="text"
+              className="border p-2 rounded w-full mt-3"
+              placeholder="Category"
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, category: e.target.value })
+              }
+            />
+            <input
+              type="text"
+              className="border p-2 rounded w-full mt-3"
+              placeholder="Aisle"
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, aisle: e.target.value })
+              }
+            />
+            <input
+              type="number"
+              className="border p-2 rounded w-full mt-3"
+              placeholder="Stock"
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, stock: Number(e.target.value) })
+              }
+            />
+            <input
+              type="number"
+              className="border p-2 rounded w-full mt-3"
+              placeholder="Price"
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, price: Number(e.target.value) })
+              }
+            />
+            <input
+              type="number"
+              className="border p-2 rounded w-full mt-3"
+              placeholder="Promo Price"
+              onChange={(e) =>
+                setNewProduct({
+                  ...newProduct,
+                  promo_price: Number(e.target.value),
+                })
+              }
+            />
+            <input
+              type="text"
+              className="border p-2 rounded w-full mt-3"
+              placeholder="Image Link"
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, image: e.target.value })
+              }
+            />
+            <div className="flex justify-end gap-2 mt-4">
+              <Button className="bg-gray-400" onClick={closeModals}>
+                Cancel
+              </Button>
+              <Button className="bg-blue-500" onClick={saveProduct}>
                 Save
               </Button>
             </div>
