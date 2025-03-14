@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { Database } from "../../database.types"; // Ensure you have this type definition
+import { Database } from "../../database.types";
 
 const supabaseUrl = "https://fgupppcvyddxuttscnpn.supabase.co";
 const supabaseAnonKey =
@@ -9,6 +9,6 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true, // Enable this for Next.js Auth handling
+    detectSessionInUrl: true,
   },
 });
