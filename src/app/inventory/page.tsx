@@ -198,7 +198,7 @@ export default function Page() {
             <TableHead className="w-[100px]">ID</TableHead>
             <TableHead>PRODUCT</TableHead>
             <TableHead>CATEGORY</TableHead>
-            <TableHead>LOCATION</TableHead>
+            <TableHead>AISLE</TableHead>
             <TableHead>STOCK</TableHead>
             <TableHead>PRICE</TableHead>
             <TableHead>SALE</TableHead>
@@ -267,15 +267,30 @@ export default function Page() {
             </label>
 
             <label className="block mb-2">
-              <span className="text-sm font-medium">Price</span>
+              <span className="text-sm font-medium">Category</span>
               <input
-                type="number"
+                type="text"
                 className="border p-2 rounded w-full"
-                value={editingProduct.price}
+                value={editingProduct.category || ""}
                 onChange={(e) =>
                   setEditingProduct({
                     ...editingProduct,
-                    price: Number(e.target.value),
+                    category: e.target.value,
+                  })
+                }
+              />
+            </label>
+
+            <label className="block mb-2">
+              <span className="text-sm font-medium">Aisle</span>
+              <input
+                type="text"
+                className="border p-2 rounded w-full"
+                value={editingProduct.aisle || ""}
+                onChange={(e) =>
+                  setEditingProduct({
+                    ...editingProduct,
+                    aisle: e.target.value,
                   })
                 }
               />
@@ -296,33 +311,26 @@ export default function Page() {
               />
             </label>
 
+            <label className="block mb-2">
+              <span className="text-sm font-medium">Price</span>
+              <input
+                type="number"
+                className="border p-2 rounded w-full"
+                value={editingProduct.price}
+                onChange={(e) =>
+                  setEditingProduct({
+                    ...editingProduct,
+                    price: Number(e.target.value),
+                  })
+                }
+              />
+            </label>
+
             <div className="flex justify-end gap-2 mt-4">
               <Button className="bg-gray-400" onClick={closeModals}>
                 Cancel
               </Button>
               <Button className="bg-blue-500" onClick={updateProduct}>
-                Save
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {addModal && (
-        <div className="fixed inset-0 flex items-center justify-center backdrop-blur-md bg-black/10 z-50">
-          <div className="bg-white p-6 rounded-lg w-96 shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Add Product</h2>
-
-            <div className="flex justify-end gap-2 mt-4">
-              <Button className="bg-gray-400" onClick={closeModals}>
-                Cancel
-              </Button>
-              <Button
-                className="bg-blue-500"
-                onClick={() => {
-                  console.log("...");
-                }}
-              >
                 Save
               </Button>
             </div>
